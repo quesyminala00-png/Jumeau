@@ -365,6 +365,7 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
             "Zone Aval Édéa": [3.800, 10.133],
             "kikot": [4.1697057,11.0186578]
         }
+        m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
         # base map
          # ===== COUCHE RASTER : MNT =====
         chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
