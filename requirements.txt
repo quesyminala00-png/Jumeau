@@ -4,3 +4,5 @@ streamlit_folium
 rasterio
 matplotlib
 matplotlib.cm
+matplotlib.colors
+folium.raster_layers
