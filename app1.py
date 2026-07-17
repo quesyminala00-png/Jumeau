@@ -514,7 +514,11 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
             popup="Édéa - ALERTE CRUE",
             icon=folium.Icon(color="red", icon="exclamation-sign"),
         ).add_to(m)
-
+        folium.Marker(
+            locations["kikot"],
+            popup="Kikot - Complexe industriel",
+            icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
+        ).add_to(m)
         # Ajouter les contrôles de couches
         folium.LayerControl().add_to(m)
         
