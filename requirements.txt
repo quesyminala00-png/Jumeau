@@ -10,3 +10,4 @@ rasterio==1.5.0
 matplotlib==3.11.0
 streamlit
 numpy
+geopandas
