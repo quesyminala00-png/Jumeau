@@ -329,28 +329,39 @@ with col_map:
                 finally:
                     os.remove(tmp_zip)
 
-        if gdf_exutoires is not None and not gdf_exutoires.empty:
-            if (
-                gdf_exutoires.crs is None
-                or gdf_exutoires.crs.to_string() != "EPSG:4326"
-            ):
-                gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
-            folium.GeoJson(
-                gdf_exutoires,
-                name="Exutoires du Bassin",
-                marker=folium.CircleMarker(
-                    radius=5,
-                    color="#e31a1c",
-                    fill=True,
-                    fill_color="#e31a1c",
-                    fill_opacity=0.9,
-                ),
-                tooltip=folium.GeoJsonTooltip(fields=["NOM"] 
-              if "NOM" in gdf_exutoires.columns 
-                 else None,aliases=(["Station :"] 
-              if "NOM" in gdf_exutoires.columns else None),),).add_to(m)
-       else:
-            st.info("Aucune hydrographie disponible pour affichage.")
+            if gdf_exutoires is not None and not gdf_exutoires.empty:
+                if gdf_exutoires.crs is None or gdf_exutoires.crs.to_string() != "EPSG:4326":
+                    gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
+            
+                # --- DETECTION AUTOMATIQUE DE LA COLONNE DE NOM ---
+                # On cherche une colonne qui contient 'nom', 'station', 'id' ou 'label' (sans s'occuper des majuscules)
+                colonnes_possibles = [c for c in gdf_exutoires.columns if any(x in c.lower() for x in ["nom", "stat", "id", "lab"])]
+                colonne_cible = colonnes_possibles[0] if colonnes_possibles else None
+
+                # Configuration dynamique de l'infobulle
+                if colonne_cible:
+                    infobulle = folium.GeoJsonTooltip(
+                        fields=[colonne_cible],
+                        aliases=["Station : "],
+                        localize=True
+                     )
+                else:
+                    infobulle = folium.GeoJsonTooltip(fields=[gdf_exutoires.columns[0]], aliases=["Index : "])
+
+                # Ajout à la carte
+                folium.GeoJson(
+                    gdf_exutoires,
+                    name="Exutoires du Bassin",
+                    marker=folium.CircleMarker(
+                        radius=5,
+                        color="#e31a1c",
+                        fill=True,
+                        fill_color="#e31a1c",
+                        fill_opacity=0.9,
+                    ),
+                    tooltip=infobulle
+                ).add_to(m)
+
     # Add your markers
     folium.Marker(
         locations["Lom Pangar (Barrage)"],
