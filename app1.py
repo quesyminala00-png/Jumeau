@@ -351,10 +351,10 @@ if menu == "🧪 Hydrochimie & Labo":
 # MODULE 1 : CARTE TEMPS RÉEL (SIG) & SIMULATION DOCK
 # ──────────────────────────────────────────────────────────────────────────
 elif menu == "🗺️ Carte Temps Réel (SIG)":
+    st.markdown("---")
+    col_graph, col_prod = st.columns([2, 1])
     
-    col_map, col_ctrl = st.columns([2, 1])
-    
-    with col_map:
+    with col_graph:
         st.subheader("Visualisation Cartographique du Réseau")
         
         # Coordonnées approximatives des points clés sur la Sanaga
@@ -560,7 +560,7 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
         ).add_to(m)
 
         st_folium(m, width="100%", height=600)
-    with col_ctrl:
+    with col_prod:
         st.subheader("🎛️ Module de Simulation")
         actif = st.selectbox("Sélectionner un actif", ["Barrage de Nachtigal", "Barrage de Lom Pangar", "Barrage de Song Loulou"])
         scenario = st.selectbox("Scénario", ["Ouverture des vannes", "Étiage sévère (Saison sèche)", "Crue décennale"])
