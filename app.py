@@ -211,7 +211,7 @@ def login_page():
         with col_btn3:
             #st.info("💡 Utilisez les comptes de démonstration ci-dessous")
         
-        st.markdown("---")
+        #st.markdown("---")
         
         # Section démo
         #st.markdown("""
