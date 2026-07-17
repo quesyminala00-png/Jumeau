@@ -200,70 +200,60 @@ with col_map:
 
     # allow upload or use local path
     # 1. COUCHE RASTER : GÉOTIFF DU MNT / BASSIN VERSANT
-        uploaded_tif = st.file_uploader(
-            "Charger un fichier GeoTIFF (Bassin)", type=["tif", "tiff"]
-        )
-        chemin_tif = None
+    uploaded_tif = st.file_uploader(
+    "Charger un fichier GeoTIFF (Bassin)", type=["tif", "tiff"]
+    )
+    chemin_tif = None
 
-        if uploaded_tif is not None:
+    if uploaded_tif is not None:
             chemin_tif = uploaded_tif
-        elif os.path.exists("data/MNT_SANAGA_EPSG4326.tif"):
+    elif os.path.exists("data/MNT_SANAGA_EPSG4326.tif"):
             chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
 
-        if chemin_tif:
-            try:
-                with rasterio.open(chemin_tif) as src:
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings(
-                            "ignore",
-                            message="Setting the shape on a NumPy array has been deprecated",
-                        )
-                        data = np.array(src.read(1), dtype="float32", copy=True)
+    if chemin_tif:
+        try:
+            with rasterio.open(chemin_tif) as src:
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="Setting the shape on a NumPy array has been deprecated",
+                    )
+                    data = np.array(src.read(1), dtype="float32", copy=True)
 
-                    nodata = src.nodata
-                    if nodata is not None:
-                        data[data == nodata] = np.nan
+                nodata = src.nodata
+                if nodata is not None:
+                    data[data == nodata] = np.nan
 
-                    dst_crs = "EPSG:4326"
-                    if src.crs and src.crs.to_string() != dst_crs:
-                        transform, width, height = calculate_default_transform(
-                            src.crs, dst_crs, src.width, src.height, *src.bounds
-                        )
-                        dst = np.empty((height, width), dtype=np.float32)
-                        reproject(
-                            source=data,
-                            destination=dst,
-                            src_transform=src.transform,
-                            src_crs=src.crs,
-                            dst_transform=transform,
-                            dst_crs=dst_crs,
-                            resampling=Resampling.bilinear,
-                        )
-                        data = dst
-                        minx, miny, maxx, maxy = array_bounds(
-                            height, width, transform
-                        )
-                    else:
-                        b = src.bounds
-                        minx, miny, maxx, maxy = (
-                            b.left,
-                            b.bottom,
-                            b.right,
-                            b.top,
-                        )
-
+                dst_crs = "EPSG:4326"
+                if src.crs and src.crs.to_string() != dst_crs:
+                    transform, width, height = calculate_default_transform(
+                        src.crs, dst_crs, src.width, src.height, *src.bounds
+                    )
+                    dst = np.empty((height, width), dtype=np.float32)
+                    reproject(
+                        source=data,
+                        destination=dst,
+                        src_transform=src.transform,
+                        src_crs=src.crs,
+                        dst_transform=transform,
+                        dst_crs=dst_crs,
+                        resampling=Resampling.bilinear,
+                    )
+                    data = dst
+                    minx, miny, maxx, maxy = array_bounds(height, width, transform)
+                else:
+                    b = src.bounds
+                    minx, miny, maxx, maxy = (b.left,b.bottom,b.right,b.top,)
                     bounds = [[miny, minx], [maxy, maxx]]
 
-                    if not np.all(np.isnan(data)):
+                if not np.all(np.isnan(data)):
                         vmin, vmax = np.nanmin(data), np.nanmax(data)
                         norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
                         cmap = cm.get_cmap("Blues")
                         mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
-                        mapped[..., 3] = np.where(
-                            np.isnan(data), 0.0, mapped[..., 3]
-                        )
+                        mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
                         img = (mapped * 255).astype("uint8")
-
+                    
                         ImageOverlay(
                             image=img,
                             bounds=bounds,
@@ -272,9 +262,7 @@ with col_map:
                             mercator_project=True,
                         ).add_to(m)
             except Exception as e:
-                st.warning(
-                    f"Impossible de charger le calque du bassin versant : {e}"
-                )
+                st.warning(f"Impossible de charger le calque du bassin versant : {e}")
 
         # 2. COUCHE VECTORIELLE : HYDROGRAPHIE DE LA SANAGA
         shp_hydro_path = "data/hydrographie sanaga.shp"
