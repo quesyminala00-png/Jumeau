@@ -285,7 +285,7 @@ with col_map:
             st.warning(f"Impossible de charger le calque du bassin versant (Erreur : {e}). Vérifiez le fichier .tif")
     try:
         # Lecture du shapefile des cours d'eau
-        gdf_hydro = gpd.read_file("data/hydrographie_sanaga.shp")
+        gdf_hydro = gpd.read_file("data/Hydrographie sanaga.shp")
 
         # Reprojection automatique en EPSG:4326 (Indispensable pour Folium)
         if gdf_hydro.crs != "EPSG:4326":
@@ -307,7 +307,7 @@ with col_map:
     # 2. CHARGEMENT ET AFFICHAGE DES EXUTOIRES (.SHP)
     try:
         # Lecture du shapefile des exutoires (points)
-        gdf_exutoires = gpd.read_file("data/exutoires_sanaga.shp")
+        gdf_exutoires = gpd.read_file("data/exutoires de la sanaga.shp")
 
         if gdf_exutoires.crs != "EPSG:4326":
             gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
