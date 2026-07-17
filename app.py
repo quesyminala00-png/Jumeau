@@ -349,15 +349,6 @@ with col_map:
               if "NOM" in gdf_exutoires.columns 
                  else None,aliases=(["Station :"] 
               if "NOM" in gdf_exutoires.columns else None),),).add_to(m)
-# Si on a un gdf, on l'affiche sur la carte
-if gdf_hydro is not None and not gdf_hydro.empty:
-    if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
-        try:
-            gdf_hydro = gdf_hydro.to_crs("EPSG:4326")
-        except Exception as e:
-            st.warning(f"Impossible de reprojeter hydrographie: {e}")
-    folium.GeoJson(gdf_hydro, name="Réseau Hydrographique",
-                   style_function=lambda feat: {"color": "#1f78b4", "weight": 2.5, "opacity": 0.8}).add_to(m)
 else:
     st.info("Aucune hydrographie disponible pour affichage.")
     # Add your markers
