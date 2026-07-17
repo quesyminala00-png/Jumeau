@@ -261,7 +261,7 @@ with col_map:
                             name="MNT / Bassin Versant",
                             mercator_project=True,
                         ).add_to(m)
-            except Exception as e:
+        except Exception as e:
                 st.warning(f"Impossible de charger le calque du bassin versant : {e}")
 
         # 2. COUCHE VECTORIELLE : HYDROGRAPHIE DE LA SANAGA
