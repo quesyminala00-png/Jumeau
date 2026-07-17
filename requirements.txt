@@ -2,3 +2,4 @@ plotly
 folium 
 streamlit_folium
 rasterio
+matplotlib
