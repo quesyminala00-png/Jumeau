@@ -225,9 +225,9 @@ def login_page():
                     #<tr><td><strong>minister</strong></td><td>→ minister123</td></tr>
                 #</table>
             #</div>
-        """, unsafe_allow_html=True)
+        #""", unsafe_allow_html=True)
         
-        st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
+        #st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
 
 
 def user_profile_sidebar():
