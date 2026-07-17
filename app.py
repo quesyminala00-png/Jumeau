@@ -205,9 +205,18 @@ with col_map:
     if chemin_tif:
         try:
             # Open (uploaded BytesIO or path) with rasterio
+            import warnings  # add near the top of the file if not present
+
             with rasterio.open(chemin_tif) as src:
                 # read the first band as float (handle nodata)
-                data = src.read(1).astype("float32")
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="Setting the shape on a NumPy array has been deprecated",
+                        category=DeprecationWarning,
+                    )
+                    # make an explicit copy-in-dtype to avoid shape/view surprises
+                    data = np.array(src.read(1), dtype="float32", copy=True)
                 nodata = src.nodata
                 if nodata is not None:
                     data[data == nodata] = np.nan
