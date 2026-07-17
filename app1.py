@@ -391,47 +391,47 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
                         )
                         data = np.array(src.read(1), dtype="float32", copy=True)
 
-                   nodata = src.nodata
-                   if nodata is not None:
-                       data[data == nodata] = np.nan
+                    nodata = src.nodata
+                    if nodata is not None:
+                        data[data == nodata] = np.nan
 
-                   dst_crs = "EPSG:4326"
-                   if src.crs and src.crs.to_string() != dst_crs:
-                       transform, width, height = calculate_default_transform(
+                    dst_crs = "EPSG:4326"
+                    if src.crs and src.crs.to_string() != dst_crs:
+                        transform, width, height = calculate_default_transform(
                             src.crs, dst_crs, src.width, src.height, *src.bounds
-                       )
-                       dst = np.empty((height, width), dtype=np.float32)
-                       reproject(
-                           source=data,
-                           destination=dst,
-                           src_transform=src.transform,
-                           src_crs=src.crs,
-                           dst_transform=transform,
-                           dst_crs=dst_crs,
-                           resampling=Resampling.bilinear,
-                       )
-                       data = dst
-                       minx, miny, maxx, maxy = array_bounds(height, width, transform)
-                   else:
-                       b = src.bounds
-                       minx, miny, maxx, maxy = (b.left,b.bottom,b.right,b.top,)
-                       bounds = [[miny, minx], [maxy, maxx]]
+                        )
+                        dst = np.empty((height, width), dtype=np.float32)
+                        reproject(
+                            source=data,
+                            destination=dst,
+                            src_transform=src.transform,
+                            src_crs=src.crs,
+                            dst_transform=transform,
+                            dst_crs=dst_crs,
+                            resampling=Resampling.bilinear,
+                        )
+                        data = dst
+                        minx, miny, maxx, maxy = array_bounds(height, width, transform)
+                    else:
+                        b = src.bounds
+                        minx, miny, maxx, maxy = (b.left,b.bottom,b.right,b.top,)
+                        bounds = [[miny, minx], [maxy, maxx]]
 
-                   if not np.all(np.isnan(data)):
-                           vmin, vmax = np.nanmin(data), np.nanmax(data)
-                           norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
-                           cmap = cm.get_cmap("Blues")
-                           mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
-                           mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
-                           img = (mapped * 255).astype("uint8")
+                    if not np.all(np.isnan(data)):
+                            vmin, vmax = np.nanmin(data), np.nanmax(data)
+                            norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+                            cmap = cm.get_cmap("Blues")
+                            mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
+                            mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
+                            img = (mapped * 255).astype("uint8")
                     
-                           ImageOverlay(
-                               image=img,
-                               bounds=bounds,
-                               opacity=0.4,
-                               name="MNT / Bassin Versant",
-                               mercator_project=True,
-                           ).add_to(m)
+                            ImageOverlay(
+                                image=img,
+                                bounds=bounds,
+                                opacity=0.4,
+                                name="MNT / Bassin Versant",
+                                mercator_project=True,
+                            ).add_to(m)
         except Exception as e:
                 st.warning(f"Impossible de charger le calque du bassin versant : {e}")
 
