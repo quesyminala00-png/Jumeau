@@ -469,7 +469,7 @@ def sidebar_nav():
     st.sidebar.markdown("### 🧭 Modules intégrés")
     menu = st.sidebar.radio(
         "Navigation principale",
-        ["Accueil", "🗺️ Carte Temps Réel (SIG)", "📐 Scène 3D & Simulation", "📊 Analytics & GIRE", "🧪 Hydrochimie & Labo", "🛠️ Capteurs & Alertes Mobile"]
+        [ "🗺️ Carte Temps Réel (SIG)", "📐 Scène 3D & Simulation", "📊 Analytics & GIRE", "🧪 Hydrochimie & Labo", "🛠️ Capteurs & Alertes Mobile"]
     )
     st.sidebar.markdown("---")
     st.sidebar.info(f"Rôle actuel : **{role}**\n\nInterface optimisée pour le bassin de la Sanaga.")
@@ -485,11 +485,7 @@ def main():
     menu, role = sidebar_nav()
     header(role)
 
-    if menu == "Accueil":
-        st.title("Tableau de bord — Jumeau numérique de la Sanaga")
-        st.write("Bienvenue — utilisez la navigation latérale pour ouvrir les modules.")
-
-    elif menu == "🗺️ Carte Temps Réel (SIG)":
+    if menu == "🗺️ Carte Temps Réel (SIG)":
         col_map, col_ctrl = st.columns([2, 1])
         with col_map:
             module_map()
