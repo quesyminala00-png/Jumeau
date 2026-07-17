@@ -291,7 +291,7 @@ def module_map():
             ).add_to(m)
 
         # ===== COUCHE VECTORIELLE : EXUTOIRES =====
-        shp_exut_path = "data/exutoires de la sanaga.shp"
+        shp_exut_path = "data/exutoires de la Sanaga.shp"
         gdf_exutoires = None
 
         if os.path.exists(shp_exut_path):
