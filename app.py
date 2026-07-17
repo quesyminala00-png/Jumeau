@@ -350,7 +350,7 @@ with col_map:
                  else None,aliases=(["Station :"] 
               if "NOM" in gdf_exutoires.columns else None),),).add_to(m)
        else:
-           st.info("Aucune hydrographie disponible pour affichage.")
+            st.info("Aucune hydrographie disponible pour affichage.")
     # Add your markers
     folium.Marker(
         locations["Lom Pangar (Barrage)"],
