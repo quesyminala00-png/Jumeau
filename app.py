@@ -1,8 +1,14 @@
-import streamlit as st
-import pandas as pd
+import io
 import numpy as np
-import plotly.graph_objects as go
+import rasterio
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+from rasterio.transform import array_bounds
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 import folium
+from folium import Map
+from folium.raster_layers import ImageOverlay
+import streamlit as st
 from streamlit_folium import st_folium
 
 # -----------------------------
@@ -167,20 +173,132 @@ def module_hydrochemistry():
 
 
 def module_map():
+   st.set_page_config(layout="wide")
+
+col_map, col_ctrl = st.columns([2, 1])
+
+with col_map:
     st.subheader("Visualisation Cartographique du Réseau")
+
+    # usual markers
     locations = {
         "Lom Pangar (Barrage)": [5.383, 13.500],
         "Nachtigal (Barrage)": [4.350, 11.633],
         "Station Goura (Mbam)": [4.712, 11.250],
-        "Zone Aval Édéa": [3.800, 10.133]
+        "Zone Aval Édéa": [3.800, 10.133],
     }
-    m = folium.Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
-    folium.Marker(locations["Lom Pangar (Barrage)"], popup="Lom Pangar - Statut OK", icon=folium.Icon(color="blue", icon="tint")).add_to(m)
-    folium.Marker(locations["Nachtigal (Barrage)"], popup="Nachtigal - Statut OK", icon=folium.Icon(color="green", icon="flash")).add_to(m)
-    folium.Marker(locations["Station Goura (Mbam)"], popup="Station Goura - Vigilance", icon=folium.Icon(color="orange", icon="warning-sign")).add_to(m)
-    folium.Marker(locations["Zone Aval Édéa"], popup="Édéa - ALERTE CRUE", icon=folium.Icon(color="red", icon="exclamation-sign")).add_to(m)
-    st_data = st_folium(m, width="100%", height=450)
 
+    # base map
+    m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
+
+    # allow upload or use local path
+    uploaded = st.file_uploader("Charger un fichier GeoTIFF (single-band)", type=["tif", "tiff"])
+    chemin_tif = None
+    if uploaded is not None:
+        # rasterio can open file-like objects
+        chemin_tif = uploaded
+    else:
+        # fallback to a path on disk — set this if you want an automatic local test file
+        # chemin_tif = "MNT_SANAGA_EPSG4326.tif"
+        chemin_tif = None
+
+    if chemin_tif:
+        try:
+            # Open (uploaded BytesIO or path) with rasterio
+            with rasterio.open(chemin_tif) as src:
+                # read the first band as float (handle nodata)
+                data = src.read(1).astype("float32")
+                nodata = src.nodata
+                if nodata is not None:
+                    data[data == nodata] = np.nan
+
+                # optionally downsample for performance (uncomment / tune)
+                # max_pixels = 1024 * 1024
+                # if src.width * src.height > max_pixels:
+                #     scale = (max_pixels / (src.width * src.height)) ** 0.5
+                #     out_shape = (int(src.count), int(src.height * scale), int(src.width * scale))
+                #     data = src.read(1, out_shape=out_shape[1:]).astype('float32')
+
+                # Reproject to EPSG:4326 if needed
+                dst_crs = "EPSG:4326"
+                if src.crs and src.crs.to_string() != dst_crs:
+                    transform, width, height = calculate_default_transform(
+                        src.crs, dst_crs, src.width, src.height, *src.bounds
+                    )
+                    dst = np.empty((height, width), dtype=np.float32)
+                    reproject(
+                        source=data,
+                        destination=dst,
+                        src_transform=src.transform,
+                        src_crs=src.crs,
+                        dst_transform=transform,
+                        dst_crs=dst_crs,
+                        resampling=Resampling.bilinear,
+                    )
+                    data = dst
+                    # compute bounds (minx, miny, maxx, maxy) for the reprojected image
+                    minx, miny, maxx, maxy = array_bounds(height, width, transform)
+                else:
+                    # already EPSG:4326 or no CRS — use original bounds
+                    b = src.bounds  # left, bottom, right, top
+                    minx, miny, maxx, maxy = b.left, b.bottom, b.right, b.top
+
+                # prepare bounds for folium: [[south, west], [north, east]]
+                bounds = [[miny, minx], [maxy, maxx]]
+
+                # Handle case where all data is nan
+                if np.all(np.isnan(data)):
+                    st.warning("Raster contains only nodata / NaN values.")
+                else:
+                    # Normalize and apply colormap to produce RGBA image (0-255 uint8)
+                    vmin = np.nanmin(data)
+                    vmax = np.nanmax(data)
+                    norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+                    cmap = cm.get_cmap("Blues")  # choose any matplotlib colormap
+                    # map normalized data to RGBA floats in [0,1]; nan -> transparent
+                    mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
+                    # set alpha to 0 where data was NaN to make transparent background
+                    mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
+                    img = (mapped * 255).astype("uint8")  # shape (H, W, 4)
+
+                    # Create the overlay
+                    ImageOverlay(
+                        image=img,
+                        bounds=bounds,
+                        opacity=0.6,
+                        name="Bassin Versant",
+                        mercator_project=True,  # folium will handle WebMercator tiling if needed
+                    ).add_to(m)
+
+                    folium.LayerControl().add_to(m)
+
+        except Exception as e:
+            st.warning(f"Impossible de charger le calque du bassin versant (Erreur : {e}). Vérifiez le fichier .tif")
+
+    # Add your markers
+    folium.Marker(
+        locations["Lom Pangar (Barrage)"],
+        popup="Lom Pangar - Statut OK",
+        icon=folium.Icon(color="blue", icon="tint"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Nachtigal (Barrage)"],
+        popup="Nachtigal - Statut OK",
+        icon=folium.Icon(color="green", icon="flash"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Station Goura (Mbam)"],
+        popup="Station Goura - Vigilance",
+        icon=folium.Icon(color="orange", icon="warning-sign"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Zone Aval Édéa"],
+        popup="Édéa - ALERTE CRUE",
+        icon=folium.Icon(color="red", icon="exclamation-sign"),
+    ).add_to(m)
+
+    # render map
+    st_folium(m, width="100%", height=600)
 
 def module_simulation():
     st.subheader("🎛️ Module de Simulation")
