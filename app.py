@@ -265,7 +265,7 @@ def module_map():
             st.warning(f"❌ Fichier MNT non trouvé : {chemin_tif}")
 
         # ===== COUCHE VECTORIELLE : HYDROGRAPHIE =====
-        shp_hydro_path = "data/hydrographie sanaga.shp"
+        shp_hydro_path = "data/Hydrographie sanaga.shp"
         gdf_hydro = None
 
         if os.path.exists(shp_hydro_path):
