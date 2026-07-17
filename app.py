@@ -421,9 +421,9 @@ def module_hydrochemistry():
 
 def module_map():
     st.set_page_config(layout="wide")
-    col_map, col_ctrl = st.columns([2, 1])
+    col_graph, col_prod = st.columns([2, 1])
 
-    with col_map:
+    with col_graph:
         st.subheader("Visualisation Cartographique du Réseau")
 
         locations = {
