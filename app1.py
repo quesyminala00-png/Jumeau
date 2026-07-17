@@ -532,34 +532,34 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
                         ),
                         tooltip=infobulle
                     ).add_to(m)
-       # Add your markers
-       folium.Marker(
-           locations["Lom Pangar (Barrage)"],
-           popup="Lom Pangar - Statut OK",
-           icon=folium.Icon(color="blue", icon="tint"),
-       ).add_to(m)
-       folium.Marker(
-           locations["Nachtigal (Barrage)"],
-           popup="Nachtigal - Statut OK",
-           icon=folium.Icon(color="green", icon="flash"),
-       ).add_to(m)
-       folium.Marker(
-           locations["Station Goura (Mbam)"],
-           popup="Station Goura - Vigilance",
-           icon=folium.Icon(color="orange", icon="warning-sign"),
-       ).add_to(m)
-       folium.Marker(
-           locations["Zone Aval Édéa"],
-           popup="Édéa - ALERTE CRUE",
-           icon=folium.Icon(color="red", icon="exclamation-sign"),
-       ).add_to(m)
-       folium.Marker(
-           locations["kikot"],
-           popup="Kikot - Complexe industriel",
-           icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
-       ).add_to(m)
+        # Add your markers
+        folium.Marker(
+            locations["Lom Pangar (Barrage)"],
+            popup="Lom Pangar - Statut OK",
+            icon=folium.Icon(color="blue", icon="tint"),
+        ).add_to(m)
+        folium.Marker(
+            locations["Nachtigal (Barrage)"],
+            popup="Nachtigal - Statut OK",
+            icon=folium.Icon(color="green", icon="flash"),
+        ).add_to(m)
+        folium.Marker(
+            locations["Station Goura (Mbam)"],
+            popup="Station Goura - Vigilance",
+            icon=folium.Icon(color="orange", icon="warning-sign"),
+        ).add_to(m)
+        folium.Marker(
+            locations["Zone Aval Édéa"],
+            popup="Édéa - ALERTE CRUE",
+            icon=folium.Icon(color="red", icon="exclamation-sign"),
+        ).add_to(m)
+        folium.Marker(
+            locations["kikot"],
+            popup="Kikot - Complexe industriel",
+            icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
+        ).add_to(m)
 
-       st_folium(m, width="100%", height=600)
+        st_folium(m, width="100%", height=600)
     with col_ctrl:
         st.subheader("🎛️ Module de Simulation")
         actif = st.selectbox("Sélectionner un actif", ["Barrage de Nachtigal", "Barrage de Lom Pangar", "Barrage de Song Loulou"])
