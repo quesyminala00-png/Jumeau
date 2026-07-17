@@ -431,6 +431,7 @@ def module_map():
             "Nachtigal (Barrage)": [4.350, 11.633],
             "Station Goura (Mbam)": [4.712, 11.250],
             "Zone Aval Édéa": [3.800, 10.133],
+            "kikot":[4.1697057,11.0186578],
         }
 
         m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
@@ -582,7 +583,11 @@ def module_map():
             popup="Édéa - ALERTE CRUE",
             icon=folium.Icon(color="red", icon="exclamation-sign"),
         ).add_to(m)
-
+        folium.Marker(
+            locations["kikot"],
+            popup="Kikot - Complexe industriel",
+            icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
+        ).add_to(m)
         # Ajouter les contrôles de couches
         folium.LayerControl().add_to(m)
         
