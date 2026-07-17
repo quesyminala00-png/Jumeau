@@ -588,19 +588,52 @@ def module_map():
         
         st_folium(m, width="100%", height=600)
 
-def module_simulation():
-    st.subheader("🎛️ Module de Simulation")
-    actif = st.selectbox("Sélectionner un actif", ["Barrage de Nachtigal", "Barrage de Lom Pangar", "Barrage de Song Loulou"])
-    scenario = st.selectbox("Scénario", ["Ouverture des vannes", "Étiage sévère (Saison sèche)", "Crue décennale"]) 
-    debit_simule = st.slider("Volume d'eau injecté / régulé (m³/s)", min_value=500, max_value=3000, value=1200, step=100)
-    st.markdown("### 🔀 Propagation estimée")
-    temps_calcul = 14 - int(debit_simule/300)
-    hauteur_calcul = round(0.1 + (debit_simule/4000), 2)
-    st.metric(label="⏱️ Temps d'arrivée à l'aval", value=f"+{temps_calcul}h 15min")
-    st.metric(label="📈 Variation Hauteur Critique", value=f"+{hauteur_calcul} m", delta=f"{hauteur_calcul}m", delta_color="inverse")
-    if st.button("⚡ SIMULER L'IMPACT SUR LE RÉSEAU", type="primary"):
-        st.success("Simulation injectée dans le moteur de calcul hydrologique !")
+with col_prod:
+        st.subheader("🎛️ Module de Simulation")
+        actif = st.selectbox("Sélectionner un actif", ["Barrage de Nachtigal", "Barrage de Lom Pangar", "Barrage de Song Loulou"])
+        scenario = st.selectbox("Scénario", ["Ouverture des vannes", "Étiage sévère (Saison sèche)", "Crue décennale"])
+        
+        debit_simule = st.slider("Volume d'eau injecté / régulé (m³/s)", min_value=500, max_value=3000, value=1200, step=100)
+        
+        st.markdown("### 🔀 Propagation estimée")
+        # Calculs fictifs pour l'animation de la maquette
+        temps_calcul = 14 - int(debit_simule/300)
+        hauteur_calcul = round(0.1 + (debit_simule/4000), 2)
+        
+        st.metric(label="⏱️ Temps d'arrivée à l'aval", value=f"+{temps_calcul}h 15min")
+        st.metric(label="📈 Variation Hauteur Critique", value=f"+{hauteur_calcul} m", delta=f"{hauteur_calcul}m", delta_color="inverse")
+        
+        if st.button("⚡ SIMULER L'IMPACT SUR LE RÉSEAU", type="primary"):
+            st.success("Simulation injectée dans le moteur de calcul hydrologique !")
 
+    st.markdown("---")
+    
+    with col_graph:
+        st.subheader("📈 Débit du fleuve (m³/s) — Station Goura (Mbam)")
+        
+        # Données de débits fictives pour le graphique
+        heures = [f"{h:02d}:00" for h in range(0, 25, 4)]
+        debit_reel = [700, 850, 1400, 1650, 1300, 950, 800]
+        seuil_alerte = [1200] * len(heures)
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=heures, y=debit_reel, name="Débit Actuel (IoT)", line=dict(color=COLOR_RIVER, width=3)))
+        fig.add_trace(go.Scatter(x=heures, y=seuil_alerte, name="Seuil d'Alerte", line=dict(color=COLOR_LATERITE, dash="dash")))
+        
+        # Si l'utilisateur clique sur le bouton de simulation, on trace une courbe prédictive
+        if debit_simule > 1200:
+            debit_predit = [d * (debit_simule/1200) for d in debit_reel]
+            fig.add_trace(go.Scatter(x=heures, y=debit_predit, name="Impact Prédit", line=dict(color=COLOR_GREEN, dash="dot")))
+
+        style_fig(fig, 250)
+        st.plotly_chart(fig, use_container_width=True)
+        
+    with col_prod:
+        st.subheader("⚡ Production Hydro Globale")
+        st.progress(0.85, text="Nachtigal : 420 MW / 420 MW")
+        st.progress(0.70, text="Song Loulou : 270 MW / 384 MW")
+        st.progress(0.90, text="Édéa : 243 MW / 270 MW")
+        st.metric(label="Total injecté au RIS (Réseau Interconnecté Sud)", value="933 MW", delta="Production Stable 🟢")
 
 def module_3d():
     st.subheader("📐 Jumeau de Scène Immersif (Simulation Géométrique 3D)")
