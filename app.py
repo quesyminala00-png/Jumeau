@@ -277,7 +277,7 @@ with col_map:
                 )
 
         # 2. COUCHE VECTORIELLE : HYDROGRAPHIE DE LA SANAGA
-        shp_hydro_path = "data/hydrographie_sanaga.shp"
+        shp_hydro_path = "data/hydrographie sanaga.shp"
         gdf_hydro = None
 
         if os.path.exists(shp_hydro_path):
@@ -316,7 +316,7 @@ with col_map:
             ).add_to(m)
 
         # 3. COUCHE VECTORIELLE : EXUTOIRES DE LA SANAGA (Double Détection)
-        shp_exut_path = "data/exutoires_sanaga.shp"
+        shp_exut_path = "data/exutoires de la sanaga.shp"
         gdf_exutoires = None
 
         if os.path.exists(shp_exut_path):
