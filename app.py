@@ -486,7 +486,7 @@ def module_map():
                             name="MNT / Bassin Versant",
                             mercator_project=True,
                         ).add_to(m)
-                        st.success("✅ MNT chargé avec succès")
+                        #st.success("✅ MNT chargé avec succès")
             except Exception as e:
                 st.warning(f"⚠️ Impossible de charger le MNT : {e}")
         else:
@@ -499,7 +499,7 @@ def module_map():
         if os.path.exists(shp_hydro_path):
             try:
                 gdf_hydro = gpd.read_file(shp_hydro_path)
-                st.success("✅ Hydrographie chargée")
+                #st.success("✅ Hydrographie chargée")
             except Exception as e:
                 st.warning(f"⚠️ Erreur lecture hydrographie : {e}")
         else:
@@ -525,7 +525,7 @@ def module_map():
         if os.path.exists(shp_exut_path):
             try:
                 gdf_exutoires = gpd.read_file(shp_exut_path)
-                st.success("✅ Exutoires chargés")
+                #st.success("✅ Exutoires chargés")
             except Exception as e:
                 st.warning(f"⚠️ Erreur lecture exutoires : {e}")
         else:
