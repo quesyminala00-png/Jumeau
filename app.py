@@ -1,3 +1,10 @@
+import os
+import tempfile
+import zipfile
+import geopandas as gpd
+import pandas as pd
+import plotly.graph_objects as go
+import warnings
 import io
 import numpy as np
 import rasterio
@@ -283,53 +290,48 @@ with col_map:
 
         except Exception as e:
             st.warning(f"Impossible de charger le calque du bassin versant (Erreur : {e}). Vérifiez le fichier .tif")
-    try:
-        # Lecture du shapefile des cours d'eau
-        gdf_hydro = gpd.read_file("data/Hydrographie sanaga.shp")
+    # Importez en haut du fichier : import os, tempfile, zipfile, geopandas as gpd
+# Remplacez le bloc de lecture par ce code :
 
-        # Reprojection automatique en EPSG:4326 (Indispensable pour Folium)
-        if gdf_hydro.crs != "EPSG:4326":
+shp_path = "data/hydrographie_sanaga.shp"
+if os.path.exists(shp_path):
+    try:
+        gdf_hydro = gpd.read_file(shp_path)
+    except Exception as e:
+        st.warning(f"Erreur lecture shapefile sur disque : {e}")
+        gdf_hydro = None
+else:
+    st.info("Shapefile hydrographie introuvable en data/. Vous pouvez uploader un .zip contenant le shapefile (shp+shx+dbf+prj).")
+    uploaded = st.file_uploader("Uploader hydrographie (.zip)", type=["zip"])
+    gdf_hydro = None
+    if uploaded is not None:
+        # sauvegarde temporaire du zip
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+            tmp.write(uploaded.getbuffer())
+            tmp.flush()
+            tmp_zip = tmp.name
+        try:
+            # geopandas peut lire directement des zip: gpd.read_file("zip://path_to_zip")
+            gdf_hydro = gpd.read_file(f"zip://{tmp_zip}")
+        except Exception as e:
+            st.warning(f"Impossible de lire le zip uploadé : {e}")
+        finally:
+            try:
+                os.remove(tmp_zip)
+            except Exception:
+                pass
+
+# Si on a un gdf, on l'affiche sur la carte
+if gdf_hydro is not None and not gdf_hydro.empty:
+    if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
+        try:
             gdf_hydro = gdf_hydro.to_crs("EPSG:4326")
-
-        # Ajout du tracé des rivières sur la carte (en bleu)
-        folium.GeoJson(
-            gdf_hydro,
-            name="Réseau Hydrographique",
-            style_function=lambda feature: {
-                "color": "#1f78b4",  # Bleu rivière
-                "weight": 2.5,  # Épaisseur de la ligne
-                "opacity": 0.8,
-            },
-        ).add_to(m)
-    except Exception as e:
-        st.warning(f"Erreur lors du chargement de l'hydrographie : {e}")
-
-    # 2. CHARGEMENT ET AFFICHAGE DES EXUTOIRES (.SHP)
-    try:
-        # Lecture du shapefile des exutoires (points)
-        gdf_exutoires = gpd.read_file("data/exutoires de la sanaga.shp")
-
-        if gdf_exutoires.crs != "EPSG:4326":
-            gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
-
-        # Ajout des exutoires sous forme de petits cercles colorés
-        folium.GeoJson(
-            gdf_exutoires,
-            name="Exutoires du Bassin",
-            marker=folium.CircleMarker(
-                radius=5,
-                color="#e31a1c",  # Rouge exutoire
-                fill=True,
-                fill_color="#e31a1c",
-                fill_opacity=0.9,
-            ),
-            tooltip=folium.GeoJsonTooltip(
-                fields=["NOM"] if "NOM" in gdf_exutoires.columns else None,
-                aliases=["Station :"] if "NOM" in gdf_exutoires.columns else None,
-            ),
-        ).add_to(m)
-    except Exception as e:
-        st.warning(f"Erreur lors du chargement des exutoires : {e}")
+        except Exception as e:
+            st.warning(f"Impossible de reprojeter hydrographie: {e}")
+    folium.GeoJson(gdf_hydro, name="Réseau Hydrographique",
+                   style_function=lambda feat: {"color": "#1f78b4", "weight": 2.5, "opacity": 0.8}).add_to(m)
+else:
+    st.info("Aucune hydrographie disponible pour affichage.")
     # Add your markers
     folium.Marker(
         locations["Lom Pangar (Barrage)"],
