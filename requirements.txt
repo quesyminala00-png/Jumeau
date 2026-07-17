@@ -3,3 +3,4 @@ folium
 streamlit_folium
 rasterio
 matplotlib
+matplotlib.cm
