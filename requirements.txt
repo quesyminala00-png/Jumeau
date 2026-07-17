@@ -3,6 +3,10 @@ folium
 streamlit_folium
 rasterio
 matplotlib
-matplotlib.cm
-matplotlib.colors
-folium.raster_layers
+plotly==6.9.0
+folium==0.20.0
+streamlit_folium==0.27.2
+rasterio==1.5.0
+matplotlib==3.11.0
+streamlit
+numpy
