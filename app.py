@@ -214,17 +214,17 @@ def login_page():
         st.markdown("---")
         
         # Section démo
-        st.markdown("""
-            <div class="login-demo">
-                <div class="login-demo-title">📋 Comptes de démonstration :</div>
-                <table style="width: 100%; color: #8FA6BE; font-size: 12px;">
-                    <tr><td><strong>supervisor</strong></td><td>→ supervisor123</td></tr>
-                    <tr><td><strong>engineer</strong></td><td>→ engineer123</td></tr>
-                    <tr><td><strong>chemist</strong></td><td>→ chemist123</td></tr>
-                    <tr><td><strong>field_agent</strong></td><td>→ agent123</td></tr>
-                    <tr><td><strong>minister</strong></td><td>→ minister123</td></tr>
-                </table>
-            </div>
+        #st.markdown("""
+            #<div class="login-demo">
+                #<div class="login-demo-title">📋 Comptes de démonstration :</div>
+                #<table style="width: 100%; color: #8FA6BE; font-size: 12px;">
+                    #<tr><td><strong>supervisor</strong></td><td>→ supervisor123</td></tr>
+                    #<tr><td><strong>engineer</strong></td><td>→ engineer123</td></tr>
+                    #<tr><td><strong>chemist</strong></td><td>→ chemist123</td></tr>
+                    #<tr><td><strong>field_agent</strong></td><td>→ agent123</td></tr>
+                    #<tr><td><strong>minister</strong></td><td>→ minister123</td></tr>
+                #</table>
+            #</div>
         """, unsafe_allow_html=True)
         
         st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
