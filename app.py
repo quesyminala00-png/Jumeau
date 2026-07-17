@@ -10,7 +10,7 @@ from folium import Map
 from folium.raster_layers import ImageOverlay
 import streamlit as st
 from streamlit_folium import st_folium
-
+import geopandas as gpd
 # -----------------------------
 # Configuration générale
 # -----------------------------
@@ -283,7 +283,53 @@ with col_map:
 
         except Exception as e:
             st.warning(f"Impossible de charger le calque du bassin versant (Erreur : {e}). Vérifiez le fichier .tif")
+    try:
+        # Lecture du shapefile des cours d'eau
+        gdf_hydro = gpd.read_file("data/hydrographie_sanaga.shp")
 
+        # Reprojection automatique en EPSG:4326 (Indispensable pour Folium)
+        if gdf_hydro.crs != "EPSG:4326":
+            gdf_hydro = gdf_hydro.to_crs("EPSG:4326")
+
+        # Ajout du tracé des rivières sur la carte (en bleu)
+        folium.GeoJson(
+            gdf_hydro,
+            name="Réseau Hydrographique",
+            style_function=lambda feature: {
+                "color": "#1f78b4",  # Bleu rivière
+                "weight": 2.5,  # Épaisseur de la ligne
+                "opacity": 0.8,
+            },
+        ).add_to(m)
+    except Exception as e:
+        st.warning(f"Erreur lors du chargement de l'hydrographie : {e}")
+
+    # 2. CHARGEMENT ET AFFICHAGE DES EXUTOIRES (.SHP)
+    try:
+        # Lecture du shapefile des exutoires (points)
+        gdf_exutoires = gpd.read_file("data/exutoires_sanaga.shp")
+
+        if gdf_exutoires.crs != "EPSG:4326":
+            gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
+
+        # Ajout des exutoires sous forme de petits cercles colorés
+        folium.GeoJson(
+            gdf_exutoires,
+            name="Exutoires du Bassin",
+            marker=folium.CircleMarker(
+                radius=5,
+                color="#e31a1c",  # Rouge exutoire
+                fill=True,
+                fill_color="#e31a1c",
+                fill_opacity=0.9,
+            ),
+            tooltip=folium.GeoJsonTooltip(
+                fields=["NOM"] if "NOM" in gdf_exutoires.columns else None,
+                aliases=["Station :"] if "NOM" in gdf_exutoires.columns else None,
+            ),
+        ).add_to(m)
+    except Exception as e:
+        st.warning(f"Erreur lors du chargement des exutoires : {e}")
     # Add your markers
     folium.Marker(
         locations["Lom Pangar (Barrage)"],
