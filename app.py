@@ -199,128 +199,168 @@ with col_map:
     m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
     # allow upload or use local path
-    uploaded = st.file_uploader("Charger un fichier GeoTIFF (single-band)", type=["tif", "tiff"])
-    chemin_tif = None
-    if uploaded is not None:
-        # rasterio can open file-like objects
-        chemin_tif = uploaded
-    else:
-        # fallback to a path on disk — set this if you want an automatic local test file
-        # chemin_tif = "MNT_SANAGA_EPSG4326.tif"
+    # 1. COUCHE RASTER : GÉOTIFF DU MNT / BASSIN VERSANT
+        uploaded_tif = st.file_uploader(
+            "Charger un fichier GeoTIFF (Bassin)", type=["tif", "tiff"]
+        )
         chemin_tif = None
 
-    if chemin_tif:
-        try:
-            # Open (uploaded BytesIO or path) with rasterio
-            import warnings  # add near the top of the file if not present
+        if uploaded_tif is not None:
+            chemin_tif = uploaded_tif
+        elif os.path.exists("data/MNT_SANAGA_EPSG4326.tif"):
+            chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
 
-            with rasterio.open(chemin_tif) as src:
-                # read the first band as float (handle nodata)
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        "ignore",
-                        message="Setting the shape on a NumPy array has been deprecated",
-                        category=DeprecationWarning,
-                    )
-                    # make an explicit copy-in-dtype to avoid shape/view surprises
-                    data = np.array(src.read(1), dtype="float32", copy=True)
-                nodata = src.nodata
-                if nodata is not None:
-                    data[data == nodata] = np.nan
-
-                # optionally downsample for performance (uncomment / tune)
-                # max_pixels = 1024 * 1024
-                # if src.width * src.height > max_pixels:
-                #     scale = (max_pixels / (src.width * src.height)) ** 0.5
-                #     out_shape = (int(src.count), int(src.height * scale), int(src.width * scale))
-                #     data = src.read(1, out_shape=out_shape[1:]).astype('float32')
-
-                # Reproject to EPSG:4326 if needed
-                dst_crs = "EPSG:4326"
-                if src.crs and src.crs.to_string() != dst_crs:
-                    transform, width, height = calculate_default_transform(
-                        src.crs, dst_crs, src.width, src.height, *src.bounds
-                    )
-                    dst = np.empty((height, width), dtype=np.float32)
-                    reproject(
-                        source=data,
-                        destination=dst,
-                        src_transform=src.transform,
-                        src_crs=src.crs,
-                        dst_transform=transform,
-                        dst_crs=dst_crs,
-                        resampling=Resampling.bilinear,
-                    )
-                    data = dst
-                    # compute bounds (minx, miny, maxx, maxy) for the reprojected image
-                    minx, miny, maxx, maxy = array_bounds(height, width, transform)
-                else:
-                    # already EPSG:4326 or no CRS — use original bounds
-                    b = src.bounds  # left, bottom, right, top
-                    minx, miny, maxx, maxy = b.left, b.bottom, b.right, b.top
-
-                # prepare bounds for folium: [[south, west], [north, east]]
-                bounds = [[miny, minx], [maxy, maxx]]
-
-                # Handle case where all data is nan
-                if np.all(np.isnan(data)):
-                    st.warning("Raster contains only nodata / NaN values.")
-                else:
-                    # Normalize and apply colormap to produce RGBA image (0-255 uint8)
-                    vmin = np.nanmin(data)
-                    vmax = np.nanmax(data)
-                    norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
-                    cmap = cm.get_cmap("Blues")  # choose any matplotlib colormap
-                    # map normalized data to RGBA floats in [0,1]; nan -> transparent
-                    mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
-                    # set alpha to 0 where data was NaN to make transparent background
-                    mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
-                    img = (mapped * 255).astype("uint8")  # shape (H, W, 4)
-
-                    # Create the overlay
-                    ImageOverlay(
-                        image=img,
-                        bounds=bounds,
-                        opacity=0.6,
-                        name="Bassin Versant",
-                        mercator_project=True,  # folium will handle WebMercator tiling if needed
-                    ).add_to(m)
-
-                    folium.LayerControl().add_to(m)
-
-        except Exception as e:
-            st.warning(f"Impossible de charger le calque du bassin versant (Erreur : {e}). Vérifiez le fichier .tif")
-    # Importez en haut du fichier : import os, tempfile, zipfile, geopandas as gpd
-# Remplacez le bloc de lecture par ce code :
-
-shp_path = "data/hydrographie_sanaga.shp"
-if os.path.exists(shp_path):
-    try:
-        gdf_hydro = gpd.read_file(shp_path)
-    except Exception as e:
-        st.warning(f"Erreur lecture shapefile sur disque : {e}")
-        gdf_hydro = None
-else:
-    st.info("Shapefile hydrographie introuvable en data/. Vous pouvez uploader un .zip contenant le shapefile (shp+shx+dbf+prj).")
-    uploaded = st.file_uploader("Uploader hydrographie (.zip)", type=["zip"])
-    gdf_hydro = None
-    if uploaded is not None:
-        # sauvegarde temporaire du zip
-        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
-            tmp.write(uploaded.getbuffer())
-            tmp.flush()
-            tmp_zip = tmp.name
-        try:
-            # geopandas peut lire directement des zip: gpd.read_file("zip://path_to_zip")
-            gdf_hydro = gpd.read_file(f"zip://{tmp_zip}")
-        except Exception as e:
-            st.warning(f"Impossible de lire le zip uploadé : {e}")
-        finally:
+        if chemin_tif:
             try:
-                os.remove(tmp_zip)
-            except Exception:
-                pass
+                with rasterio.open(chemin_tif) as src:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore",
+                            message="Setting the shape on a NumPy array has been deprecated",
+                        )
+                        data = np.array(src.read(1), dtype="float32", copy=True)
 
+                    nodata = src.nodata
+                    if nodata is not None:
+                        data[data == nodata] = np.nan
+
+                    dst_crs = "EPSG:4326"
+                    if src.crs and src.crs.to_string() != dst_crs:
+                        transform, width, height = calculate_default_transform(
+                            src.crs, dst_crs, src.width, src.height, *src.bounds
+                        )
+                        dst = np.empty((height, width), dtype=np.float32)
+                        reproject(
+                            source=data,
+                            destination=dst,
+                            src_transform=src.transform,
+                            src_crs=src.crs,
+                            dst_transform=transform,
+                            dst_crs=dst_crs,
+                            resampling=Resampling.bilinear,
+                        )
+                        data = dst
+                        minx, miny, maxx, maxy = array_bounds(
+                            height, width, transform
+                        )
+                    else:
+                        b = src.bounds
+                        minx, miny, maxx, maxy = (
+                            b.left,
+                            b.bottom,
+                            b.right,
+                            b.top,
+                        )
+
+                    bounds = [[miny, minx], [maxy, maxx]]
+
+                    if not np.all(np.isnan(data)):
+                        vmin, vmax = np.nanmin(data), np.nanmax(data)
+                        norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+                        cmap = cm.get_cmap("Blues")
+                        mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
+                        mapped[..., 3] = np.where(
+                            np.isnan(data), 0.0, mapped[..., 3]
+                        )
+                        img = (mapped * 255).astype("uint8")
+
+                        ImageOverlay(
+                            image=img,
+                            bounds=bounds,
+                            opacity=0.4,
+                            name="MNT / Bassin Versant",
+                            mercator_project=True,
+                        ).add_to(m)
+            except Exception as e:
+                st.warning(
+                    f"Impossible de charger le calque du bassin versant : {e}"
+                )
+
+        # 2. COUCHE VECTORIELLE : HYDROGRAPHIE DE LA SANAGA
+        shp_hydro_path = "data/hydrographie_sanaga.shp"
+        gdf_hydro = None
+
+        if os.path.exists(shp_hydro_path):
+            try:
+                gdf_hydro = gpd.read_file(shp_hydro_path)
+            except Exception as e:
+                st.warning(f"Erreur lecture hydrographie locale : {e}")
+        else:
+            uploaded_hydro = st.file_uploader(
+                "Uploader hydrographie (.zip)", type=["zip"], key="hydro_zip"
+            )
+            if uploaded_hydro is not None:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".zip", delete=False
+                ) as tmp:
+                    tmp.write(uploaded_hydro.getbuffer())
+                    tmp_zip = tmp.name
+                try:
+                    gdf_hydro = gpd.read_file(f"zip://{tmp_zip}")
+                except Exception as e:
+                    st.warning(f"Erreur lecture zip hydrographie : {e}")
+                finally:
+                    os.remove(tmp_zip)
+
+        if gdf_hydro is not None and not gdf_hydro.empty:
+            if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
+                gdf_hydro = gdf_hydro.to_crs("EPSG:4326")
+            folium.GeoJson(
+                gdf_hydro,
+                name="Réseau Hydrographique",
+                style_function=lambda feat: {
+                    "color": COLOR_RIVER,
+                    "weight": 2.5,
+                    "opacity": 0.8,
+                },
+            ).add_to(m)
+
+        # 3. COUCHE VECTORIELLE : EXUTOIRES DE LA SANAGA (Double Détection)
+        shp_exut_path = "data/exutoires_sanaga.shp"
+        gdf_exutoires = None
+
+        if os.path.exists(shp_exut_path):
+            try:
+                gdf_exutoires = gpd.read_file(shp_exut_path)
+            except Exception as e:
+                st.warning(f"Erreur lecture exutoires locaux : {e}")
+        else:
+            uploaded_exut = st.file_uploader(
+                "Uploader exutoires (.zip)", type=["zip"], key="exut_zip"
+            )
+            if uploaded_exut is not None:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".zip", delete=False
+                ) as tmp:
+                    tmp.write(uploaded_exut.getbuffer())
+                    tmp_zip = tmp.name
+                try:
+                    gdf_exutoires = gpd.read_file(f"zip://{tmp_zip}")
+                except Exception as e:
+                    st.warning(f"Erreur lecture zip exutoires : {e}")
+                finally:
+                    os.remove(tmp_zip)
+
+        if gdf_exutoires is not None and not gdf_exutoires.empty:
+            if (
+                gdf_exutoires.crs is None
+                or gdf_exutoires.crs.to_string() != "EPSG:4326"
+            ):
+                gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
+            folium.GeoJson(
+                gdf_exutoires,
+                name="Exutoires du Bassin",
+                marker=folium.CircleMarker(
+                    radius=5,
+                    color="#e31a1c",
+                    fill=True,
+                    fill_color="#e31a1c",
+                    fill_opacity=0.9,
+                ),
+                tooltip=folium.GeoJsonTooltip(fields=["NOM"] 
+              if "NOM" in gdf_exutoires.columns 
+                 else None,aliases=(["Station :"] 
+              if "NOM" in gdf_exutoires.columns else None),),).add_to(m)
 # Si on a un gdf, on l'affiche sur la carte
 if gdf_hydro is not None and not gdf_hydro.empty:
     if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
