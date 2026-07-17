@@ -315,7 +315,7 @@ def inject_css():
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
-        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hydro-green) 100%); background-size: 200% 100%; animation: flow 8s linear infinite; }
+        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hyd[...]
         @keyframes flow { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
         .main-title { font-family: 'Space Grotesk', sans-serif; font-size: 27px !important; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
         .main-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); letter-spacing: 0.5px; text-transform: uppercase; }
@@ -729,11 +729,7 @@ def main():
     header(st.session_state.role)
 
     if menu == "🗺️ Carte Temps Réel (SIG)":
-        col_map, col_ctrl = st.columns([2, 1])
-        with col_map:
-            module_map()
-        with col_ctrl:
-            module_simulation()
+        module_map()
 
     elif menu == "📐 Scène 3D & Simulation":
         module_3d()
