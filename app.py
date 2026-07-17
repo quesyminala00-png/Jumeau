@@ -729,7 +729,7 @@ def main():
     header(st.session_state.role)
 
     if menu == "🗺️ Carte Temps Réel (SIG)":
-        col_graph, col_prod = st.columns([2, 1])
+        col_map, col_ctrl = st.columns([2, 1])
         with col_map:
             module_map()
         with col_ctrl:
