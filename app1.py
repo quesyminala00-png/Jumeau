@@ -362,21 +362,204 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
             "Lom Pangar (Barrage)": [5.383, 13.500],
             "Nachtigal (Barrage)": [4.350, 11.633],
             "Station Goura (Mbam)": [4.712, 11.250],
-            "Zone Aval Édéa": [3.800, 10.133]
+            "Zone Aval Édéa": [3.800, 10.133],
+            "kikot": [4.1697057,11.0186578]
         }
-        
+        # base map
+        m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
+
         # Création de la carte Folium centrée sur le Cameroun / Sanaga
-        m = folium.Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
-        
-        # Ajout des marqueurs avec des couleurs de statut
-        folium.Marker(locations["Lom Pangar (Barrage)"], popup="Lom Pangar - Statut OK", icon=folium.Icon(color="blue", icon="tint")).add_to(m)
-        folium.Marker(locations["Nachtigal (Barrage)"], popup="Nachtigal - Statut OK", icon=folium.Icon(color="green", icon="flash")).add_to(m)
-        folium.Marker(locations["Station Goura (Mbam)"], popup="Station Goura - Vigilance", icon=folium.Icon(color="orange", icon="warning-sign")).add_to(m)
-        folium.Marker(locations["Zone Aval Édéa"], popup="Édéa - ALERTE CRUE", icon=folium.Icon(color="red", icon="exclamation-sign")).add_to(m)
-        
-        # Rendu de la carte dans Streamlit
-        st_folium(m, width="100%", height=400)
-        
+        # allow upload or use local path
+        # 1. COUCHE RASTER : GÉOTIFF DU MNT / BASSIN VERSANT
+        uploaded_tif = st.file_uploader(
+       "Charger un fichier GeoTIFF (Bassin)", type=["tif", "tiff"]
+        )
+        chemin_tif = None
+
+        if uploaded_tif is not None:
+                chemin_tif = uploaded_tif
+        elif os.path.exists("data/MNT_SANAGA_EPSG4326.tif"):
+                chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
+
+        if chemin_tif:
+            try:
+                with rasterio.open(chemin_tif) as src:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore",
+                            message="Setting the shape on a NumPy array has been deprecated",
+                        )
+                        data = np.array(src.read(1), dtype="float32", copy=True)
+
+                   nodata = src.nodata
+                   if nodata is not None:
+                       data[data == nodata] = np.nan
+
+                   dst_crs = "EPSG:4326"
+                   if src.crs and src.crs.to_string() != dst_crs:
+                       transform, width, height = calculate_default_transform(
+                            src.crs, dst_crs, src.width, src.height, *src.bounds
+                       )
+                       dst = np.empty((height, width), dtype=np.float32)
+                       reproject(
+                           source=data,
+                           destination=dst,
+                           src_transform=src.transform,
+                           src_crs=src.crs,
+                           dst_transform=transform,
+                           dst_crs=dst_crs,
+                           resampling=Resampling.bilinear,
+                       )
+                       data = dst
+                       minx, miny, maxx, maxy = array_bounds(height, width, transform)
+                   else:
+                       b = src.bounds
+                       minx, miny, maxx, maxy = (b.left,b.bottom,b.right,b.top,)
+                       bounds = [[miny, minx], [maxy, maxx]]
+
+                   if not np.all(np.isnan(data)):
+                           vmin, vmax = np.nanmin(data), np.nanmax(data)
+                           norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+                           cmap = cm.get_cmap("Blues")
+                           mapped = cmap(norm(np.nan_to_num(data, nan=vmin)))
+                           mapped[..., 3] = np.where(np.isnan(data), 0.0, mapped[..., 3])
+                           img = (mapped * 255).astype("uint8")
+                    
+                           ImageOverlay(
+                               image=img,
+                               bounds=bounds,
+                               opacity=0.4,
+                               name="MNT / Bassin Versant",
+                               mercator_project=True,
+                           ).add_to(m)
+        except Exception as e:
+                st.warning(f"Impossible de charger le calque du bassin versant : {e}")
+
+        # 2. COUCHE VECTORIELLE : HYDROGRAPHIE DE LA SANAGA
+        shp_hydro_path = "data/hydrographie sanaga.shp"
+        gdf_hydro = None
+
+        if os.path.exists(shp_hydro_path):
+            try:
+                gdf_hydro = gpd.read_file(shp_hydro_path)
+            except Exception as e:
+                st.warning(f"Erreur lecture hydrographie locale : {e}")
+        else:
+            uploaded_hydro = st.file_uploader(
+                "Uploader hydrographie (.zip)", type=["zip"], key="hydro_zip"
+            )
+            if uploaded_hydro is not None:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".zip", delete=False
+                ) as tmp:
+                    tmp.write(uploaded_hydro.getbuffer())
+                    tmp_zip = tmp.name
+                try:
+                    gdf_hydro = gpd.read_file(f"zip://{tmp_zip}")
+                except Exception as e:
+                    st.warning(f"Erreur lecture zip hydrographie : {e}")
+                finally:
+                    os.remove(tmp_zip)
+
+        if gdf_hydro is not None and not gdf_hydro.empty:
+            if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
+                gdf_hydro = gdf_hydro.to_crs("EPSG:4326")
+            folium.GeoJson(
+                gdf_hydro,
+                name="Réseau Hydrographique",
+                style_function=lambda feat: {
+                    "color": COLOR_RIVER,
+                    "weight": 2.5,
+                    "opacity": 0.8,
+                },
+            ).add_to(m)
+
+        # 3. COUCHE VECTORIELLE : EXUTOIRES DE LA SANAGA (Double Détection)
+        shp_exut_path = "data/exutoires de la sanaga.shp"
+        gdf_exutoires = None
+
+        if os.path.exists(shp_exut_path):
+            try:
+                gdf_exutoires = gpd.read_file(shp_exut_path)
+            except Exception as e:
+                st.warning(f"Erreur lecture exutoires locaux : {e}")
+        else:
+            uploaded_exut = st.file_uploader(
+                "Uploader exutoires (.zip)", type=["zip"], key="exut_zip"
+            )
+            if uploaded_exut is not None:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".zip", delete=False
+                ) as tmp:
+                    tmp.write(uploaded_exut.getbuffer())
+                    tmp_zip = tmp.name
+                try:
+                    gdf_exutoires = gpd.read_file(f"zip://{tmp_zip}")
+                except Exception as e:
+                    st.warning(f"Erreur lecture zip exutoires : {e}")
+                finally:
+                    os.remove(tmp_zip)
+
+            if gdf_exutoires is not None and not gdf_exutoires.empty:
+                if gdf_exutoires.crs is None or gdf_exutoires.crs.to_string() != "EPSG:4326":
+                    gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
+            
+                # --- DETECTION AUTOMATIQUE DE LA COLONNE DE NOM ---
+                # On cherche une colonne qui contient 'nom', 'station', 'id' ou 'label' (sans s'occuper des majuscules)
+                colonnes_possibles = [c for c in gdf_exutoires.columns if any(x in c.lower() for x in ["nom", "stat", "id", "lab"])]
+                colonne_cible = colonnes_possibles[0] if colonnes_possibles else None
+
+                # Configuration dynamique de l'infobulle
+                if colonne_cible:
+                    infobulle = folium.GeoJsonTooltip(
+                        fields=[colonne_cible],
+                        aliases=["Station : "],
+                        localize=True
+                     )
+                else:
+                    infobulle = folium.GeoJsonTooltip(fields=[gdf_exutoires.columns[0]], aliases=["Index : "])
+
+                # Ajout à la carte
+                folium.GeoJson(
+                    gdf_exutoires,
+                    name="Exutoires du Bassin",
+                    marker=folium.CircleMarker(
+                        radius=5,
+                        color="#e31a1c",
+                        fill=True,
+                        fill_color="#e31a1c",
+                        fill_opacity=0.9,
+                    ),
+                    tooltip=infobulle
+                ).add_to(m)
+    # Add your markers
+    folium.Marker(
+        locations["Lom Pangar (Barrage)"],
+        popup="Lom Pangar - Statut OK",
+        icon=folium.Icon(color="blue", icon="tint"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Nachtigal (Barrage)"],
+        popup="Nachtigal - Statut OK",
+        icon=folium.Icon(color="green", icon="flash"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Station Goura (Mbam)"],
+        popup="Station Goura - Vigilance",
+        icon=folium.Icon(color="orange", icon="warning-sign"),
+    ).add_to(m)
+    folium.Marker(
+        locations["Zone Aval Édéa"],
+        popup="Édéa - ALERTE CRUE",
+        icon=folium.Icon(color="red", icon="exclamation-sign"),
+    ).add_to(m)
+    folium.Marker(
+        locations["kikot"],
+        popup="Kikot - Complexe industriel",
+        icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
+    ).add_to(m)
+
+    st_folium(m, width="100%", height=600)
     with col_ctrl:
         st.subheader("🎛️ Module de Simulation")
         actif = st.selectbox("Sélectionner un actif", ["Barrage de Nachtigal", "Barrage de Lom Pangar", "Barrage de Song Loulou"])
@@ -396,9 +579,6 @@ elif menu == "🗺️ Carte Temps Réel (SIG)":
             st.success("Simulation injectée dans le moteur de calcul hydrologique !")
 
     st.markdown("---")
-    
-    # Zone inférieure : Graphique temporel et compteurs énergétiques
-    col_graph, col_prod = st.columns([2, 1])
     
     with col_graph:
         st.subheader("📈 Débit du fleuve (m³/s) — Station Goura (Mbam)")
