@@ -120,7 +120,7 @@ def init_session_state():
 
 
 def login_page():
-    """Page de connexion"""
+    """Page de connexion stylisée"""
     # Centre le contenu
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -165,6 +165,9 @@ def login_page():
                 font-weight: 600;
                 margin-bottom: 8px;
             }
+            .input-field {
+                margin-bottom: 15px;
+            }
             </style>
             <div class="login-container">
                 <div class="login-title">🌊 JUMEAU SANAGA</div>
@@ -175,15 +178,28 @@ def login_page():
         st.markdown("---")
         
         # Formulaire de connexion
-        with st.form("login_form"):
-            username = st.text_input("Nom d'utilisateur", key="username_input")
-            password = st.text_input("Mot de passe", type="password", key="password_input")
-            
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                submit_button = st.form_submit_button("🔓 Se connecter", use_container_width=True)
-            
-            if submit_button:
+        col_form_1, col_form_2 = st.columns([1, 1])
+        
+        with col_form_1:
+            username = st.text_input(
+                "Nom d'utilisateur",
+                key="username_input",
+                placeholder="Entrez votre identifiant"
+            )
+        
+        with col_form_2:
+            password = st.text_input(
+                "Mot de passe",
+                type="password",
+                key="password_input",
+                placeholder="Entrez votre mot de passe"
+            )
+        
+        # Boutons d'action
+        col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
+        
+        with col_btn1:
+            if st.button("🔓 Se connecter", use_container_width=True, type="primary"):
                 if not username or not password:
                     st.error("⚠️ Veuillez remplir tous les champs")
                 elif login_user(username, password):
@@ -192,21 +208,46 @@ def login_page():
                 else:
                     st.error("❌ Identifiants incorrects. Veuillez réessayer.")
         
+        with col_btn3:
+            st.info("💡 Utilisez les comptes de démonstration ci-dessous")
+        
         st.markdown("---")
         
         # Section démo
         st.markdown("""
             <div class="login-demo">
                 <div class="login-demo-title">📋 Comptes de démonstration :</div>
-                <strong>supervisor</strong> → supervisor123<br>
-                <strong>engineer</strong> → engineer123<br>
-                <strong>chemist</strong> → chemist123<br>
-                <strong>field_agent</strong> → agent123<br>
-                <strong>minister</strong> → minister123
+                <table style="width: 100%; color: #8FA6BE; font-size: 12px;">
+                    <tr><td><strong>supervisor</strong></td><td>→ supervisor123</td></tr>
+                    <tr><td><strong>engineer</strong></td><td>→ engineer123</td></tr>
+                    <tr><td><strong>chemist</strong></td><td>→ chemist123</td></tr>
+                    <tr><td><strong>field_agent</strong></td><td>→ agent123</td></tr>
+                    <tr><td><strong>minister</strong></td><td>→ minister123</td></tr>
+                </table>
             </div>
         """, unsafe_allow_html=True)
         
         st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
+
+
+def user_profile_sidebar():
+    """Affiche le profil utilisateur dans la sidebar avec option de déconnexion"""
+    if st.session_state.authenticated:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 👤 Profil Utilisateur")
+        
+        col_profile_1, col_profile_2 = st.sidebar.columns([2, 1])
+        with col_profile_1:
+            st.sidebar.markdown(f"**{st.session_state.username}**")
+            st.sidebar.caption(f"🎭 {st.session_state.role}")
+            st.sidebar.caption(f"📧 {st.session_state.email}")
+        
+        st.sidebar.markdown("---")
+        
+        if st.sidebar.button("🔓 Déconnexion", use_container_width=True, type="secondary"):
+            logout_user()
+            st.rerun()
+
 
 if not hasattr(mpl_cm, "get_cmap"):
     def _get_cmap(name, lut=None):
@@ -274,7 +315,7 @@ def inject_css():
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
-        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hydro-green) 100%); background-size: 200% 100%; animation: flow 6s linear infinite; }
+        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hydro-green) 100%); background-size: 200% 100%; animation: flow 8s linear infinite; }
         @keyframes flow { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
         .main-title { font-family: 'Space Grotesk', sans-serif; font-size: 27px !important; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
         .main-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); letter-spacing: 0.5px; text-transform: uppercase; }
@@ -624,16 +665,15 @@ def module_sensors():
 
 def sidebar_nav():
     st.sidebar.markdown("## 🌊 JUMEAU SANAGA")
-    role = st.sidebar.selectbox("👤 Profil Utilisateur", ["Superviseur GIRE", "Ingénieur Barrage (NHPC/EDC)", "Hydrochimiste / Labo", "Agent de Terrain", "Décideur / Ministère"]) 
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 🧭 Modules intégrés")
+    
     menu = st.sidebar.radio(
         "Navigation principale",
-        [ "🗺️ Carte Temps Réel (SIG)", "📐 Scène 3D & Simulation", "📊 Analytics & GIRE", "🧪 Hydrochimie & Labo", "🛠️ Capteurs & Alertes Mobile"]
+        ["🗺️ Carte Temps Réel (SIG)", "📐 Scène 3D & Simulation", "📊 Analytics & GIRE", "🧪 Hydrochimie & Labo", "🛠️ Capteurs & Alertes Mobile"]
     )
-    st.sidebar.markdown("---")
-    st.sidebar.info(f"Rôle actuel : **{role}**\n\nInterface optimisée pour le bassin de la Sanaga.")
-    return menu, role
+    
+    return menu
 
 
 # -----------------------------
@@ -641,9 +681,19 @@ def sidebar_nav():
 # -----------------------------
 
 def main():
+    init_session_state()
     inject_css()
-    menu, role = sidebar_nav()
-    header(role)
+    
+    # Vérification de l'authentification
+    if not st.session_state.authenticated:
+        login_page()
+        return
+    
+    # Afficher le menu principal si authentifié
+    menu = sidebar_nav()
+    user_profile_sidebar()
+    
+    header(st.session_state.role)
 
     if menu == "🗺️ Carte Temps Réel (SIG)":
         col_map, col_ctrl = st.columns([2, 1])
