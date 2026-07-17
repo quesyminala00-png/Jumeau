@@ -209,9 +209,9 @@ def login_page():
                     st.error("❌ Identifiants incorrects. Veuillez réessayer.")
         
         with col_btn3:
-            #st.info("💡 Utilisez les comptes de démonstration ci-dessous")
+            st.info("💡 Utilisez les comptes de démonstration ci-dessous")
         
-        #st.markdown("---")
+        st.markdown("---")
         
         # Section démo
         #st.markdown("""
