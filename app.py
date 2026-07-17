@@ -209,7 +209,7 @@ def login_page():
                     st.error("❌ Identifiants incorrects. Veuillez réessayer.")
         
         with col_btn3:
-            st.info("💡 Utilisez les comptes de démonstration ci-dessous")
+            #st.info("💡 Utilisez les comptes de démonstration ci-dessous")
         
         st.markdown("---")
         
@@ -227,7 +227,7 @@ def login_page():
             #</div>
         #""", unsafe_allow_html=True)
         
-        #st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
+        st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
 
 
 def user_profile_sidebar():
