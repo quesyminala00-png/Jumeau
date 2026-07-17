@@ -18,6 +18,18 @@ from folium.raster_layers import ImageOverlay
 import streamlit as st
 from streamlit_folium import st_folium
 import geopandas as gpd
+import matplotlib.cm as mpl_cm
+from matplotlib import colormaps
+
+if not hasattr(mpl_cm, "get_cmap"):
+    def _get_cmap(name, lut=None):
+        cmap = colormaps.get_cmap(name)
+        if lut is not None:
+            return cmap.resampled(lut)
+        return cmap
+
+    mpl_cm.get_cmap = _get_cmap
+
 # -----------------------------
 # Configuration générale
 # -----------------------------
