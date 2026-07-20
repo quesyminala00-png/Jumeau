@@ -424,20 +424,16 @@ def module_map():
         folium.TileLayer(
             tiles="https://google.com{x}&y={y}&z={z}",
             attr="Google Satellite",
-            name="Google Satellite (Hybride)",
+            name="Google Satellite ",
             overlay=False,
             control=True
         ).add_to(m)
 
         # 4. Ajout de votre couche de couvert végétal ESA WorldCover par-dessus
-        url_wms_esa = "https://terrascope.be"
-        folium.WmsTileLayer(
-            url=url_wms_esa,
-            layers="WORLDCOVER_2021_MAP",
-            format="image/png",
-            transparent=True,
-            name="Couvert Végétal (ESA 10m)",
-            attribution="© ESA WorldCover",
+        folium.TileLayer(
+            tiles="https://arcgis.com{z}/{y}/{x}",
+            attr="Esri Land Cover",
+            name="Couvert Végétal & Sol (Esri 10m)",
             overlay=True,
             control=True
         ).add_to(m)
