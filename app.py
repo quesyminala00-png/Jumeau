@@ -30,31 +30,31 @@ import os
 # Configuration d'authentification
 # ========================
 
-# Base de données d'utilisateurs (à remplacer par une vraie base de données)
-# Format: {username: {password_hash, role, email}}
+# IMPORTANT: Ne JAMAIS exposer les credentials en production
+# Utiliser des variables d'environnement ou un gestionnaire de secrets
 USERS_DB = {
     "supervisor": {
-        "password_hash": hashlib.sha256("supervisor123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256(os.getenv("SUPERVISOR_PWD", "supervisor123").encode()).hexdigest(),
         "role": "Superviseur GIRE",
         "email": "supervisor@sanaga.cm"
     },
     "engineer": {
-        "password_hash": hashlib.sha256("engineer123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256(os.getenv("ENGINEER_PWD", "engineer123").encode()).hexdigest(),
         "role": "Ingénieur Barrage (NHPC/EDC)",
         "email": "engineer@sanaga.cm"
     },
     "chemist": {
-        "password_hash": hashlib.sha256("chemist123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256(os.getenv("CHEMIST_PWD", "chemist123").encode()).hexdigest(),
         "role": "Hydrochimiste / Labo",
         "email": "chemist@sanaga.cm"
     },
     "field_agent": {
-        "password_hash": hashlib.sha256("agent123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256(os.getenv("FIELD_AGENT_PWD", "agent123").encode()).hexdigest(),
         "role": "Agent de Terrain",
         "email": "field@sanaga.cm"
     },
     "minister": {
-        "password_hash": hashlib.sha256("minister123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256(os.getenv("MINISTER_PWD", "minister123").encode()).hexdigest(),
         "role": "Décideur / Ministère",
         "email": "minister@sanaga.cm"
     }
@@ -120,8 +120,7 @@ def init_session_state():
 
 
 def login_page():
-    """Page de connexion stylisée"""
-    # Centre le contenu
+    """Page de connexion stylisée - Code masqué en production"""
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
@@ -151,33 +150,18 @@ def login_page():
                 letter-spacing: 0.5px;
                 text-transform: uppercase;
             }
-            .login-demo {
-                background: rgba(22, 163, 74, 0.12);
-                border-left: 3px solid #16A34A;
-                padding: 12px 14px;
-                border-radius: 6px;
-                margin-bottom: 25px;
-                font-size: 12px;
-                color: #8FA6BE;
-            }
-            .login-demo-title {
-                color: #16A34A;
-                font-weight: 600;
-                margin-bottom: 8px;
-            }
             .input-field {
                 margin-bottom: 15px;
             }
             </style>
             <div class="login-container">
                 <div class="login-title">🌊 JUMEAU SANAGA</div>
-                <div class="login-subtitle">Système d'authentification</div>
+                <div class="login-subtitle">Système d'authentification sécurisé</div>
             </div>
         """, unsafe_allow_html=True)
         
         st.markdown("---")
         
-        # Formulaire de connexion
         col_form_1, col_form_2 = st.columns([1, 1])
         
         with col_form_1:
@@ -195,7 +179,6 @@ def login_page():
                 placeholder="Entrez votre mot de passe"
             )
         
-        # Boutons d'action
         col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
         
         with col_btn1:
@@ -203,31 +186,16 @@ def login_page():
                 if not username or not password:
                     st.error("⚠️ Veuillez remplir tous les champs")
                 elif login_user(username, password):
-                    st.success(f"✅ Connexion réussie ! Bienvenue {username}")
+                    st.success("✅ Connexion réussie ! Bienvenue")
                     st.rerun()
                 else:
                     st.error("❌ Identifiants incorrects. Veuillez réessayer.")
         
         with col_btn3:
-            st.info("💡 Utilisez les comptes de démonstration ci-dessous")
+            st.info("💡 Contactez l'administrateur pour vos identifiants")
         
         st.markdown("---")
-        
-        # Section démo
-        #st.markdown("""
-            #<div class="login-demo">
-                #<div class="login-demo-title">📋 Comptes de démonstration :</div>
-                #<table style="width: 100%; color: #8FA6BE; font-size: 12px;">
-                    #<tr><td><strong>supervisor</strong></td><td>→ supervisor123</td></tr>
-                    #<tr><td><strong>engineer</strong></td><td>→ engineer123</td></tr>
-                    #<tr><td><strong>chemist</strong></td><td>→ chemist123</td></tr>
-                    #<tr><td><strong>field_agent</strong></td><td>→ agent123</td></tr>
-                    #<tr><td><strong>minister</strong></td><td>→ minister123</td></tr>
-                #</table>
-            #</div>
-        #""", unsafe_allow_html=True)
-        
-        st.info("💡 Cette interface est sécurisée. En production, utilisez une vraie base de données et HTTPS.")
+        st.warning("⚠️ Accès sécurisé - Toute tentative d'accès non autorisé est enregistrée et peut être poursuivie en justice")
 
 
 def user_profile_sidebar():
@@ -240,7 +208,6 @@ def user_profile_sidebar():
         with col_profile_1:
             st.sidebar.markdown(f"**{st.session_state.username}**")
             st.sidebar.caption(f"🎭 {st.session_state.role}")
-            st.sidebar.caption(f"📧 {st.session_state.email}")
         
         st.sidebar.markdown("---")
         
@@ -258,14 +225,27 @@ if not hasattr(mpl_cm, "get_cmap"):
 
     mpl_cm.get_cmap = _get_cmap
 
-# -----------------------------
-# Configuration générale
-# -----------------------------
+# Masquer le bouton "Source code" et autres éléments de Streamlit
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            .stDeployButton {display:none;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Configuration de la page - Masquer le menu "About"
 st.set_page_config(
     page_title="Jumeau Numérique - BV Sanaga",
     page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        "Get help": None,
+        "Report a bug": None,
+        "About": None
+    }
 )
 
 # Thème couleurs / constantes
@@ -291,9 +271,7 @@ def style_fig(fig, height=300):
     return fig
 
 
-# -----------------------------
 # CSS & Style
-# -----------------------------
 def inject_css():
     st.markdown("""
         <style>
@@ -315,7 +293,7 @@ def inject_css():
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
-        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hyd[...]
+        .river-flow { height: 4px; width: 100%; margin: 4px 0 22px 0; border-radius: 2px; background: linear-gradient(90deg, var(--laterite) 0%, var(--river-blue) 35%, var(--river-cyan) 60%, var(--hydro-green) 100%); background-size: 200% 200%; animation: flow 8s ease-in-out infinite; }
         @keyframes flow { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
         .main-title { font-family: 'Space Grotesk', sans-serif; font-size: 27px !important; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
         .main-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); letter-spacing: 0.5px; text-transform: uppercase; }
@@ -330,10 +308,7 @@ def inject_css():
     """, unsafe_allow_html=True)
 
 
-# -----------------------------
-# Modules (chacun est une fonction)
-# -----------------------------
-
+# Modules
 def header(role):
     col_title, col_status, col_alert = st.columns([2, 1, 1])
     with col_title:
@@ -370,8 +345,8 @@ def module_hydrochemistry():
             else:
                 df = pd.read_excel(uploaded_file)
             st.success("✅ Fichier chargé avec succès !")
-        except Exception as e:
-            st.error(f"Erreur lors de la lecture du fichier : {e}")
+        except Exception:
+            st.error("❌ Erreur lors de la lecture du fichier. Veuillez vérifier le format.")
             df = None
     else:
         st.warning("⚠️ Aucun fichier fourni. Affichage des données de simulation de la Sanaga.")
@@ -385,9 +360,7 @@ def module_hydrochemistry():
         })
 
     if df is not None:
-        # Calculs
         df = df.copy()
-        # éviter les erreurs si colonnes manquantes
         for col in ['Calcium_meq', 'Magnesium_meq', 'Sodium_meq', 'pH', 'Conductivite_uS']:
             if col not in df.columns:
                 df[col] = np.nan
@@ -436,7 +409,7 @@ def module_map():
 
         m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
-        # ===== COUCHE RASTER : MNT =====
+        # COUCHE RASTER : MNT
         chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
         if os.path.exists(chemin_tif):
             try:
@@ -487,24 +460,22 @@ def module_map():
                             name="MNT / Bassin Versant",
                             mercator_project=True,
                         ).add_to(m)
-                        #st.success("✅ MNT chargé avec succès")
-            except Exception as e:
-                st.warning(f"⚠️ Impossible de charger le MNT : {e}")
+            except Exception:
+                st.warning("⚠️ Impossible de charger les données géospatiales")
         else:
-            st.warning(f"❌ Fichier MNT non trouvé : {chemin_tif}")
+            st.warning("❌ Données géospatiales non disponibles")
 
-        # ===== COUCHE VECTORIELLE : HYDROGRAPHIE =====
+        # COUCHE VECTORIELLE : HYDROGRAPHIE
         shp_hydro_path = "data/Hydrographie sanaga.shp"
         gdf_hydro = None
 
         if os.path.exists(shp_hydro_path):
             try:
                 gdf_hydro = gpd.read_file(shp_hydro_path)
-                #st.success("✅ Hydrographie chargée")
-            except Exception as e:
-                st.warning(f"⚠️ Erreur lecture hydrographie : {e}")
+            except Exception:
+                st.warning("⚠️ Erreur de chargement de l'hydrographie")
         else:
-            st.info(f"ℹ️ Fichier hydrographie non trouvé : {shp_hydro_path}")
+            st.info("ℹ️ Données hydrographiques non disponibles")
 
         if gdf_hydro is not None and not gdf_hydro.empty:
             if gdf_hydro.crs is None or gdf_hydro.crs.to_string() != "EPSG:4326":
@@ -519,24 +490,22 @@ def module_map():
                 },
             ).add_to(m)
 
-        # ===== COUCHE VECTORIELLE : EXUTOIRES =====
+        # COUCHE VECTORIELLE : EXUTOIRES
         shp_exut_path = "data/exutoires de la Sanaga.shp"
         gdf_exutoires = None
 
         if os.path.exists(shp_exut_path):
             try:
                 gdf_exutoires = gpd.read_file(shp_exut_path)
-                #st.success("✅ Exutoires chargés")
-            except Exception as e:
-                st.warning(f"⚠️ Erreur lecture exutoires : {e}")
+            except Exception:
+                st.warning("⚠️ Erreur de chargement des exutoires")
         else:
-            st.info(f"ℹ️ Fichier exutoires non trouvé : {shp_exut_path}")
+            st.info("ℹ️ Données des exutoires non disponibles")
 
         if gdf_exutoires is not None and not gdf_exutoires.empty:
             if gdf_exutoires.crs is None or gdf_exutoires.crs.to_string() != "EPSG:4326":
                 gdf_exutoires = gdf_exutoires.to_crs("EPSG:4326")
             
-            # Détection automatique de la colonne de nom
             colonnes_possibles = [c for c in gdf_exutoires.columns if any(x in c.lower() for x in ["nom", "stat", "id", "lab"])]
             colonne_cible = colonnes_possibles[0] if colonnes_possibles else None
 
@@ -562,7 +531,6 @@ def module_map():
                 tooltip=infobulle
             ).add_to(m)
 
-        # Ajout des marqueurs de statut
         folium.Marker(
             locations["Lom Pangar (Barrage)"],
             popup="Lom Pangar - Statut OK",
@@ -588,7 +556,6 @@ def module_map():
             popup="Kikot - Complexe industriel",
             icon=folium.Icon(color="purple", icon="industry", prefix="fa"),
         ).add_to(m)
-        # Ajouter les contrôles de couches
         folium.LayerControl().add_to(m)
         
         st_folium(m, width="100%", height=600)
@@ -601,7 +568,6 @@ def module_map():
         debit_simule = st.slider("Volume d'eau injecté / régulé (m³/s)", min_value=500, max_value=3000, value=1200, step=100)
         
         st.markdown("### 🔀 Propagation estimée")
-        # Calculs fictifs pour l'animation de la maquette
         temps_calcul = 14 - int(debit_simule/300)
         hauteur_calcul = round(0.1 + (debit_simule/4000), 2)
         
@@ -616,7 +582,6 @@ def module_map():
     with col_graph:
         st.subheader("📈 Débit du fleuve (m³/s) — Station Goura (Mbam)")
         
-        # Données de débits fictives pour le graphique
         heures = [f"{h:02d}:00" for h in range(0, 25, 4)]
         debit_reel = [700, 850, 1400, 1650, 1300, 950, 800]
         seuil_alerte = [1200] * len(heures)
@@ -625,7 +590,6 @@ def module_map():
         fig.add_trace(go.Scatter(x=heures, y=debit_reel, name="Débit Actuel (IoT)", line=dict(color=COLOR_RIVER, width=3)))
         fig.add_trace(go.Scatter(x=heures, y=seuil_alerte, name="Seuil d'Alerte", line=dict(color=COLOR_LATERITE, dash="dash")))
         
-        # Si l'utilisateur clique sur le bouton de simulation, on trace une courbe prédictive
         if debit_simule > 1200:
             debit_predit = [d * (debit_simule/1200) for d in debit_reel]
             fig.add_trace(go.Scatter(x=heures, y=debit_predit, name="Impact Prédit", line=dict(color=COLOR_GREEN, dash="dot")))
@@ -639,6 +603,7 @@ def module_map():
         st.progress(0.70, text="Song Loulou : 270 MW / 384 MW")
         st.progress(0.90, text="Édéa : 243 MW / 270 MW")
         st.metric(label="Total injecté au RIS (Réseau Interconnecté Sud)", value="933 MW", delta="Production Stable 🟢")
+
 
 def module_3d():
     st.subheader("📐 Jumeau de Scène Immersif (Simulation Géométrique 3D)")
@@ -694,12 +659,8 @@ def module_sensors():
         incident = st.text_area("Description du problème (ex: Capteur obstrué par des sédiments ou problème d'alimentation solaire)")
         submit = st.form_submit_button("Envoyer l'alerte à la salle de contrôle")
         if submit:
-            st.success(f"Rapport envoyé avec succès pour la {station_select} !")
+            st.success("Rapport envoyé avec succès à la salle de contrôle !")
 
-
-# -----------------------------
-# Barre latérale + Navigation
-# -----------------------------
 
 def sidebar_nav():
     st.sidebar.markdown("## 🌊 JUMEAU SANAGA")
@@ -714,20 +675,14 @@ def sidebar_nav():
     return menu
 
 
-# -----------------------------
-# Main
-# -----------------------------
-
 def main():
     init_session_state()
     inject_css()
     
-    # Vérification de l'authentification
     if not st.session_state.authenticated:
         login_page()
         return
     
-    # Afficher le menu principal si authentifié
     menu = sidebar_nav()
     user_profile_sidebar()
     
@@ -735,16 +690,12 @@ def main():
 
     if menu == "🗺️ Carte Temps Réel (SIG)":
         module_map()
-
     elif menu == "📐 Scène 3D & Simulation":
         module_3d()
-
     elif menu == "📊 Analytics & GIRE":
         module_analytics()
-
     elif menu == "🧪 Hydrochimie & Labo":
         module_hydrochemistry()
-
     else:
         module_sensors()
 
