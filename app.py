@@ -431,14 +431,10 @@ def module_map():
             name="Couvert Végétal (ESA 10m)",
             attribution="© ESA WorldCover / Terrascope",
             overlay=True,
-            control=True,
-            show=True # Activé par défaut à l'écran
+            control=True
         ).add_to(m)
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
-        # 5. AJOUT INDISPENSABLE : Le contrôle des couches (LayerControl)
-        # Permet à l'utilisateur de cocher/décocher le couvert végétal en haut à droite
-        folium.LayerControl(position="topright").add_to(m)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
         # COUCHE RASTER : MNT
