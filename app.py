@@ -441,7 +441,7 @@ def module_map():
         m.fit_bounds(limites_de_limitation)
         folium.LayerControl(position="topright").add_to(m)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
-
+        st_folium(m, width="100%", height=500, key="sanaga_google_map")
         # COUCHE RASTER : MNT
         chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
         if os.path.exists(chemin_tif):
