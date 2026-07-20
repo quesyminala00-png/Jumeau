@@ -406,6 +406,22 @@ def module_map():
             "Zone Aval Édéa": [3.800, 10.133],
             "kikot":[4.1697057,11.0186578],
         }
+        # 1. Définition des limites géographiques strictes (Sud-Ouest et Nord-Est du bassin)
+        limites_de_limitation = [[3.0, 9.5], [7.5, 14.5]]
+
+        # 2. Création de la carte avec blocage des mouvements en dehors du bassin
+        m = folium.Map(
+            location=[4.8, 11.8], 
+            zoom_start=7, 
+            min_zoom=6,
+            max_zoom=10,
+            tiles="CartoDB positron",
+            max_bounds=True,
+            bounds=limites_de_limitation
+        )
+
+        # 3. Forcer la carte à se caler immédiatement sur ces limites
+        m.fit_bounds(limites_de_limitation)
 
         m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
