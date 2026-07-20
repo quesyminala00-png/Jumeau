@@ -420,28 +420,10 @@ def module_map():
             max_bounds=True,
             bounds=limites_de_limitation
         ).add_to(m)
-        # 3. Ajout de la couche Google Satellite (décochée par défaut)
-        folium.TileLayer(
-            tiles="https://google.com{x}&y={y}&z={z}",
-            attr="Google Satellite",
-            name="Google Satellite ",
-            overlay=False,
-            control=True
-        ).add_to(m)
-
-        # 4. Ajout de votre couche de couvert végétal ESA WorldCover par-dessus
-        folium.TileLayer(
-            tiles="https://arcgis.com{z}/{y}/{x}",
-            attr="Esri Land Cover",
-            name="Couvert Végétal & Sol (Esri 10m)",
-            overlay=True,
-            control=True
-        ).add_to(m)
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
-        folium.LayerControl(position="topright").add_to(m)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
-        st_folium(m, width="100%", height=500, key="sanaga_google_map")
+        
         # COUCHE RASTER : MNT
         chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
         if os.path.exists(chemin_tif):
