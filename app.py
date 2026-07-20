@@ -414,13 +414,36 @@ def module_map():
             location=[4.8, 11.8], 
             zoom_start=7, 
             min_zoom=6,
-            max_zoom=13,
-            tiles="CartoDB positron",
+            max_zoom=19,
+            tiles="https://google.com{x}&y={y}&z={z}",
+            attr="Google",
             max_bounds=True,
             bounds=limites_de_limitation
         )
+        # 3. Ajout de la couche Google Satellite (décochée par défaut)
+        folium.TileLayer(
+            tiles="https://google.com{x}&y={y}&z={z}",
+            attr="Google Satellite",
+            name="Google Satellite (Hybride)",
+            overlay=False,
+            control=True
+        ).add_to(m)
+
+        # 4. Ajout de votre couche de couvert végétal ESA WorldCover par-dessus
+        url_wms_esa = "https://terrascope.be"
+        folium.WmsTileLayer(
+            url=url_wms_esa,
+            layers="WORLDCOVER_2021_MAP",
+            format="image/png",
+            transparent=True,
+            name="Couvert Végétal (ESA 10m)",
+            attribution="© ESA WorldCover",
+            overlay=True,
+            control=True
+        ).add_to(m)
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
+        folium.LayerControl(position="topright").add_to(m)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
         # COUCHE RASTER : MNT
