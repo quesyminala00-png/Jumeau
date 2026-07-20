@@ -414,8 +414,8 @@ def module_map():
             location=[4.8, 11.8], 
             zoom_start=7, 
             min_zoom=6,
-            max_zoom=19,
-            tiles="CartoDB positron",
+            max_zoom=10,
+            tiles="CartoDB dark_matter",
             max_bounds=True,
             bounds=limites_de_limitation
         ).add_to(m)
