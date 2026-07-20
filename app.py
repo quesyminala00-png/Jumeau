@@ -418,7 +418,7 @@ def module_map():
             tiles="CartoDB dark_matter",
             max_bounds=True,
             bounds=limites_de_limitation
-        ).add_to(m)
+        )
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
