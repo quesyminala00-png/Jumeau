@@ -423,7 +423,7 @@ def module_map():
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
 
-        m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
+        #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
 
         # COUCHE RASTER : MNT
         chemin_tif = "data/MNT_SANAGA_EPSG4326.tif"
