@@ -419,20 +419,6 @@ def module_map():
             max_bounds=True,
             bounds=limites_de_limitation
         )
-        # 3. Ajout de la couche ESA WorldCover (Résolution 10m - Couvert végétal global)
-        # Ce service WMS affiche instantanément les forêts, savanes et cultures du bassin
-        url_wms_esa = "https://terrascope.be"
-
-        folium.WmsTileLayer(
-            url=url_wms_esa,
-            layers="WORLDCOVER_2021_MAP",
-            format="image/png",
-            transparent=True,
-            name="Couvert Végétal (ESA 10m)",
-            attribution="© ESA WorldCover / Terrascope",
-            overlay=True,
-            control=True
-        ).add_to(m)
         # 3. Forcer la carte à se caler immédiatement sur ces limites
         m.fit_bounds(limites_de_limitation)
         #m = Map(location=[4.6, 11.8], zoom_start=7, tiles="CartoDB dark_matter")
