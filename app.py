@@ -419,7 +419,7 @@ def module_map():
             attr="Google",
             max_bounds=True,
             bounds=limites_de_limitation
-        )
+        ).add_to(m)
         # 3. Ajout de la couche Google Satellite (décochée par défaut)
         folium.TileLayer(
             tiles="https://google.com{x}&y={y}&z={z}",
