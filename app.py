@@ -415,8 +415,7 @@ def module_map():
             zoom_start=7, 
             min_zoom=6,
             max_zoom=19,
-            tiles="https://google.com{x}&y={y}&z={z}",
-            attr="Google",
+            tiles="OpenStreetMap",
             max_bounds=True,
             bounds=limites_de_limitation
         ).add_to(m)
